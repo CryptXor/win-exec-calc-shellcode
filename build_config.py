@@ -35,5 +35,22 @@ build_config = {
         },
       },
     },
+    "win-exec-calc-shellcode.bin": {
+      "architecture": "x86/x64",
+      "files": {
+        "win-exec-calc-shellcode.bin": {
+          "sources":  ["win-exec-calc-shellcode.asm"],
+        },
+      },
+    },
+    "win-exec-calc-shellcode-esp.bin": {
+      "architecture": "x86/x64",
+      "files": {
+        "win-exec-calc-shellcode-esp.bin": {
+          "sources":  ["win-exec-calc-shellcode.asm"],
+          "defines":  {"STACK_ALIGN": "TRUE"},
+        },
+      },
+    },
   },
 }

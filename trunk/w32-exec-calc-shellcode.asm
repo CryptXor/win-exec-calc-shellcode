@@ -4,11 +4,17 @@
 ; Project homepage: http://code.google.com/p/win-exec-calc-shellcode/
 ; All rights reserved. See COPYRIGHT.txt for details.
 BITS 32
+SECTION .text
 
 %include 'type-conversion.asm'
 
+%ifndef PLATFORM_INDEPENDENT
+  global _shellcode
+  _shellcode:
+%endif
+
 %ifdef STACK_ALIGN
-  AND     SP, 0xFFFC
+    AND     SP, 0xFFFC
 %endif
 
 %ifndef PLATFORM_INDEPENDENT

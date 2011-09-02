@@ -5,6 +5,9 @@
 ; All rights reserved. See COPYRIGHT.txt for details.
 BITS 32
 
+global shellcode
+shellcode:
+
 %ifdef STACK_ALIGN
     AND     SP, 0xFFFC
 %endif
@@ -19,7 +22,7 @@ BITS 32
 %undef STACK_ALIGN
 ; Because EAX is set to 1 or 0, a few more size optimizations are possible in
 ; the x86/x64 shellcodes.
-%define PLATFORM_INDEPENDENT  
+%define PLATFORM_INDEPENDENT
 
 ; Since EAX gets incremented on x86, the code did not branch but falls through
 ; into the x86 shellcode.

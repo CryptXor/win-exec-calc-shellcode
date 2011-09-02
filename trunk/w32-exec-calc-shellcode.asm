@@ -14,9 +14,7 @@ BITS 32
   AND     SP, 0xFFFC
 %endif
 
-%ifdef PLATFORM_INDEPENDENT
-    CDQ                                 ; EDX = 0
-%else
+%ifndef PLATFORM_INDEPENDENT
     XOR     EDX, EDX                    ; EDX = 0
 %endif
     PUSH    EDX                         ; Stack = 0
@@ -39,15 +37,16 @@ BITS 32
     ADD     ESI, EDI                    ; ESI = kernel32 + offset(names table) = &(names table)
 ; Found export names table (ESI)
     MOV     ECX, [EDI + EBX + 0x24]     ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
-; Found export ordinals table offset (ECX)
+    ADD     ECX, EDI                    ; ECX = kernel32 + offset(ordinals table) = ordinals table
+; Found export ordinals table (ECX)
 find_winexec_x86:
     INC     EDX                         ; EDX = function number + 1
     LODSD                               ; EAX = &(names table[function number]) = offset(function name)
     CMP     [EDI + EAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x86            ;
 ; Found WinExec ordinal (EDX)
-    LEA     EDX, [ECX + EDX * 2 - 2]    ; EDX = offset(ordinals table) + (WinExec function number + 1) * 2 - 2 = offset(WinExec function ordinal)
-    MOVZX   EDX, WORD [EDI + EDX]       ; EDX = [kernel32 + offset(WinExec function ordinal)] = WinExec function ordinal
+    MOVZX   EDX, WORD PTR [ECX + EDX * 2 - 2]
+                                        ; EDX = [ordinals table + (WinExec function number + 1) * 2 - 2] = WinExec function ordinal
     MOV     ESI, [EDI + EBX + 0x1C]     ; ESI = [kernel32 + offset(export table) + 0x1C] = offset(address table)] = offset(address table)
     ADD     ESI, EDI                    ; ESI = kernel32 + offset(address table) = &(address table)
     ADD     EDI, [ESI + EDX * 4]        ; EDI = kernel32 + [&(address table)[WinExec ordinal]] = offset(WinExec) = &(WinExec)

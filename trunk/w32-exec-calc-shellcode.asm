@@ -1,12 +1,9 @@
-; Copyright (c) 2009-2011, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+; Copyright (c) 2009-2011, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com> and Peter Ferrie <peter.ferrie@gmail.com>
+; Windows x86 null-free shellcode that executes calc.exe.
+; Works in any x86 application for Windows 5.0-7.0 all service packs.
 ; Project homepage: http://code.google.com/p/win-exec-calc-shellcode/
 ; All rights reserved. See COPYRIGHT.txt for details.
 BITS 32
-; Windows x86 null-free shellcode that executes calc.exe.
-; Works in any x86 application for Windows 5.0-7.0 all service packs.
-; (See http://skypher.com/wiki/index.php/Hacking/Shellcode).
-; Thanks to Peter Ferrie for suggesting to look up kernel32.dll using
-; InLoadOrder and WinExec by looking for "WinE" rather than using hashes.
 
 %include 'type-conversion.asm'
 
@@ -45,7 +42,7 @@ find_winexec_x86:
     CMP     [EDI + EAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x86            ;
 ; Found WinExec ordinal (EDX)
-    MOVZX   EDX, WORD PTR [ECX + EDX * 2 - 2]
+    MOVZX   EDX, WORD [ECX + EDX * 2 - 2]
                                         ; EDX = [ordinals table + (WinExec function number + 1) * 2 - 2] = WinExec function ordinal
     MOV     ESI, [EDI + EBX + 0x1C]     ; ESI = [kernel32 + offset(export table) + 0x1C] = offset(address table)] = offset(address table)
     ADD     ESI, EDI                    ; ESI = kernel32 + offset(address table) = &(address table)

@@ -10,13 +10,14 @@ BITS 32
     AND     SP, 0xFFFC
 %endif
 
-    XOR   EAX, EAX
-    INC   EAX
-    JZ    w64_exec_calc_shellcode
+    ;no undocumented use of REX with potentially unpleasant future side-effects
+    XOR   ECX, ECX
+    XOR   RDX, R10
+    JECXZ w64_exec_calc_shellcode
 ; In x64 opcodes, this translates to:
-;   XOR   EAX, EAX
-;   [REX prefix with all flags 0]
-;   JZ    w64_exec_calc_shellcode
+;   XOR   ECX, ECX (and now RCX is zero)
+;   [REX prefix instruction in 64-bit, "DEC ECX" and "XOR EDX, EDX" in 32-bit]
+;   JECXZ w64_exec_calc_shellcode
 
 ; Because the stack has been aligned (if requested), this does not need to get
 ; done in the x86/x64 shellcodes.

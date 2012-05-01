@@ -20,16 +20,16 @@ shellcode:
 ; Because the stack has been aligned (if requested), this does not need to get
 ; done in the x86/x64 shellcodes.
 %undef STACK_ALIGN
-; Because EAX is set to 1 or 0, a few more size optimizations are possible in
+; Because ECX is set to 0 or -1, a few more size optimizations are possible in
 ; the x86/x64 shellcodes.
 %define PLATFORM_INDEPENDENT
 
-; Since EAX gets incremented on x86, the code did not branch but falls through
+; Since ECX gets decremented on x86, the code did not branch but falls through
 ; into the x86 shellcode.
 w32_exec_calc_shellcode:
 %include "w32-exec-calc-shellcode.asm"
 
-; Since EAX does NOT get incremented on x64, the code did branch to the x64
+; Since ECX does NOT get decremented on x64, the code did branch to the x64
 ; shellcode.
 w64_exec_calc_shellcode:
 %include "w64-exec-calc-shellcode.asm"

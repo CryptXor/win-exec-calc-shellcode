@@ -14,7 +14,7 @@ shellcode:
 %endif
 
 %ifdef STACK_ALIGN
-    AND     SP, 0xFFF8
+    AND     SPL, 0xF8
 %endif
 
 %ifndef PLATFORM_INDEPENDENT

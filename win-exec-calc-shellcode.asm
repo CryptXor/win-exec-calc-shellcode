@@ -9,7 +9,7 @@ global shellcode
 shellcode:
 
 %ifdef STACK_ALIGN
-    AND     SP, 0xFFFC
+    AND     SP, 0xFFF8
 %endif
     ; x86                         ; x64
     XOR   ECX, ECX                ; --->  XOR   ECX, ECX

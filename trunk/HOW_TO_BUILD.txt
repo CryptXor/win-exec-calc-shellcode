@@ -1,0 +1,9 @@
+Release versions are build using SkyBuild (https://code.google.com/p/skybuild/), which is a python script that uses
+nasm (http://www.nasm.us/) to assemble and Microsoft Visual Studio to compile the source into binary formats. It reads
+build_config.py and build_info.txt to find out what to do and stores build number in the later.
+
+If you just want to assemble the shellcode manually, you can use the following commands:
+  nasm w32-exec-calc-shellcode.asm -o w32-exec-calc-shellcode.bin
+  nasm w64-exec-calc-shellcode.asm -o w64-exec-calc-shellcode.bin
+  nasm win-exec-calc-shellcode.asm -o win-exec-calc-shellcode.bin
+

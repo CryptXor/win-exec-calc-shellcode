@@ -34,7 +34,10 @@ SECTION .text
     MOV     EDI, [ESI + 0x18]           ; EDI = [InLoadOrder[2] + 0x18] = kernel32 DllBase
 ; Found kernel32 base address (EDI)
     MOV     EBX, [EDI + 0x3C]           ; EBX = [kernel32 + 0x3C] = offset(PE header)
-    MOV     EBX, [EDI + EBX + 0x78]     ; EBX = [kernel32 + offset(PE header) + 0x78] = offset(export table)
+; PE header (EDI+EBX) = @0x00 0x04 byte signature
+;                       @0x04 0x18 byte COFF header
+;                       @0x18      PE32 optional header
+    MOV     EBX, [EDI + EBX + 0x18 + 0x60] ; EBX = [PE header + offset(PE32 optional header) + offset(PE32 export table offset)] = offset(export table)
 ; Found export table offset (EBX)
     MOV     ESI, [EDI + EBX + 0x20]     ; ESI = [kernel32 + offset(export table) + 0x20] = offset(names table)
     ADD     ESI, EDI                    ; ESI = kernel32 + offset(names table) = &(names table)

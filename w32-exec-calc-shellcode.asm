@@ -36,8 +36,8 @@ SECTION .text
     MOV     EBX, [EDI + 0x3C]           ; EBX = [kernel32 + 0x3C] = offset(PE header)
 ; PE header (EDI+EBX) = @0x00 0x04 byte signature
 ;                       @0x04 0x18 byte COFF header
-;                       @0x18      PE32 optional header
-    MOV     EBX, [EDI + EBX + 0x18 + 0x60] ; EBX = [PE header + offset(PE32 optional header) + offset(PE32 export table offset)] = offset(export table)
+;                       @0x18      PE32 optional header (EDI + EBX + 0x18)
+    MOV     EBX, [EDI + EBX + 0x18 + 0x60] ; EBX = [PE32 optional header + offset(PE32 export table offset)] = offset(export table)
 ; Found export table offset (EBX)
     MOV     ESI, [EDI + EBX + 0x20]     ; ESI = [kernel32 + offset(export table) + 0x20] = offset(names table)
     ADD     ESI, EDI                    ; ESI = kernel32 + offset(names table) = &(names table)

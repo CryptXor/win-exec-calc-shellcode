@@ -1,8 +1,10 @@
-; Copyright (c) 2009-2011, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com> and Peter Ferrie <peter.ferrie@gmail.com>
-; null-free x86/x64 branching code for calc.exe executing shellcode.
-; Works in any x86 or x64 application for Windows 5.0-7.0 all service packs.
+; Copyright (c) 2009-2013, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+; and Peter Ferrie <peter.ferrie@gmail.com>
 ; Project homepage: http://code.google.com/p/win-exec-calc-shellcode/
 ; All rights reserved. See COPYRIGHT.txt for details.
+
+; null-free x86/x64 branching code for calc.exe executing shellcode.
+; Works in any x86 or x64 application for Windows 5.0-6.3 all service packs.
 BITS 32
 
 global shellcode

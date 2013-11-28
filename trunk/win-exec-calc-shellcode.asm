@@ -15,9 +15,9 @@ shellcode:
 %endif
     ; x86                         ; x64
     XOR   ECX, ECX                ; --->  XOR   ECX, ECX
-    DEC   ECX                     ; -,->  XOR   RDX, R10
+    DEC   ECX                     ; \,->  XOR   RDX, R10
     XOR   EDX, EDX                ; /
-    JECXZ w64_exec_calc_shellcode ; 
+    JECXZ w64_exec_calc_shellcode ; --->  JECXZ w64_exec_calc_shellcode
 
 ; Because the stack has been aligned (if requested), this does not need to get
 ; done in the x86/x64 shellcodes.

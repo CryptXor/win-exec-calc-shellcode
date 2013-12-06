@@ -19,12 +19,9 @@ shellcode:
     XOR   EDX, EDX                ; /
     JECXZ w64_exec_calc_shellcode ; --->  JECXZ w64_exec_calc_shellcode
 
-; Because the stack has been aligned (if requested), this does not need to get
-; done in the x86/x64 shellcodes.
-%undef STACK_ALIGN
-; Because ECX is set to 0 or -1, a few more size optimizations are possible in
-; the x86/x64 shellcodes.
-%define PLATFORM_INDEPENDENT
+; Because ECX is set to 0 in x64 mode, and EDX is set to 0 in all cases, a size
+; optimization is possible in the x86/x64 shellcodes.
+%define PLATFORM_INDEPENDENT  
 
 ; Since ECX gets decremented on x86, the code did not branch but falls through
 ; into the x86 shellcode.

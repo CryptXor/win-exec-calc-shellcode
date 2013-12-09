@@ -83,7 +83,7 @@ find_winexec_x64:
 %ifndef CLEAN
     ADD     RSP, 0x68                     ; reset stack to where it was after pushing registers
 %else
-    ADD     RSP, 0x30                     ; reset stack to where it was after pushing registers
+    ADD     RSP, 0x30                     ; Reset stack to where it was after pushing registers
 %endif
     POP     RBP                           ; POP registers
     POP     RDI
@@ -94,6 +94,6 @@ find_winexec_x64:
     POP     RCX
     POP     RAX
 %endif
-    RET                                   ; Return
+    RET                                   ; Return (in real life, you may want to replace this with "RET 0x????")
 %endif
 %endif

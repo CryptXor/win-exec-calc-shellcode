@@ -64,9 +64,9 @@ find_winexec_x86:
     CALL    EDI                           ; WinExec(&("calc"), 0);
 %ifndef PLATFORM_INDEPENDENT
 %ifdef FUNC
+    POP     EAX                           ; Reset stack to where it was after pushing registers
     POP     EAX
-    POP     EAX
-    POPAD
-    RET                                   
+    POPAD                                 ; POP registers
+    RET                                   ; Return  (in real life, you may want to replace this with "RET 0x????")
 %endif
 %endif

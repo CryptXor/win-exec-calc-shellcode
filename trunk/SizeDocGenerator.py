@@ -11,4 +11,10 @@ for sArch in sorted(dsDoc_by_sArch.keys()):
   sDoc = dsDoc_by_sArch[sArch];
   iBinSize = os.path.getsize(r"build\bin\%s-exec-calc-shellcode.bin" % sArch);
   iBinESPSize = os.path.getsize(r"build\bin\%s-exec-calc-shellcode-esp.bin" % sArch);
-  print "  * %s: %d bytes (%d with stack allignment)" % (sDoc, iBinSize, iBinESPSize);
+  try:
+    iBinFuncSize = os.path.getsize(r"build\bin\%s-exec-calc-shellcode-func.bin" % sArch);
+    iBinCleanFuncSize = os.path.getsize(r"build\bin\%s-exec-calc-shellcode-clean-func.bin" % sArch);
+  except:
+    print "  * %s: %d bytes (%d w/ stack allign)" % (sDoc, iBinSize, iBinESPSize);
+  else:
+    print "  * %s: %d bytes (%d w/ stack allign, %d w/ function wrapper, %d w/ function wrapper + save all registers)" % (sDoc, iBinSize, iBinESPSize, iBinFuncSize, iBinCleanFuncSize);

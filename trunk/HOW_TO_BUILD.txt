@@ -11,6 +11,9 @@ yasm (http://yasm.tortall.net/):
   yasm win-exec-calc-shellcode.asm -o win-exec-calc-shellcode.bin
 
 You can add the argument "-DSTACK_ALIGN=TRUE" to build shellcode that re-aligns the stack.
+You can add the argument "-DFUNC=TRUE" to build shellcode as a function that supports returning with non-volatile registers preserved.
+You can add the argument "-DFUNC=TRUE -DCLEAN=TRUE" to build shellcode as a function that supports returning with all registers preserved.
+You can also combine FUNC (and CLEAN) and STACK_ALIGN to produce code that will align the stack and still support returning with registers preserved.
 
 If you want to create a DLL-file that executes the shellcode, you can compile win-dll-run-shellcode.c
 If you want to create an executable that executes the shellcode, you can compile win-exe-run-shellcode.c

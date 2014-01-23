@@ -1,4 +1,4 @@
-; Copyright (c) 2009-2013, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+; Copyright (c) 2009-2014, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
 ; and Peter Ferrie <peter.ferrie@gmail.com>
 ; Project homepage: http://code.google.com/p/win-exec-calc-shellcode/
 ; All rights reserved. See COPYRIGHT.txt for details.
@@ -15,7 +15,7 @@ SECTION .text
 %ifndef PLATFORM_INDEPENDENT
 global shellcode
 shellcode:
-%ifdef FUNC                               ; RET assumes stack is 8 bit aligned on entry after pushing ret address.
+%ifdef FUNC                               ; assumes stack ends with 8 on entry, use STACK_ALIGN if it might not be.
 %ifdef CLEAN                              ; 64-bit calling convention considers RAX, RCX, RDX, R8, R9, R10 and R11
     PUSH    RAX                           ; volatile. Use CLEAN if you want to preserve those as well.
     PUSH    RCX
@@ -24,27 +24,43 @@ shellcode:
     PUSH    RBX
     PUSH    RSI
     PUSH    RDI
-    PUSH    RBP                           ; Stack is now 8 bit aligned (!CLEAN) or 16 bit (CLEAN) aligned
-%elifdef STACK_ALIGN
-    AND     SPL, 0xF0                     ; Make sure stack is 16 bit aligned
-%else
-                                          ; Assume the stack is 16-bit aligned.
+    PUSH    RBP                           ; Stack now ends with 8 (!CLEAN) or is 16 byte (CLEAN) aligned
 %endif
+%ifdef STACK_ALIGN
+%ifdef FUNC
+    PUSH    RSP
+    POP     RAX
 %endif
+    AND     SPL, 0xF0                     ; Align stack to 16 bytes
+                                          ; (we can't force it to end with 8 without dummy push and then or)
+    PUSH    RAX                           ; Force stack to end with 8 before next push, also saves RSP to restore stack
+%elifdef CLEAN
+    PUSH    RAX                           ; dummy push to make stack end with 8 before next push
+%endif
+
 ; Note to SkyLined: instructions on 32-bit registers are automatically sign-extended to 64-bits.
-; This means LODSD will set the high DWORD of RAX to 0 of 0xFFFFFFFF.
+; This means LODSD will set the high DWORD of RAX to 0 if top bit of EAX was 0, or 0xFFFFFFFF if it was 0x80000000.
     PUSH    BYTE 0x60                     ; Stack 
     POP     RDX                           ; RDX = 0x60
+%else
+%ifdef FUNC
+%ifdef CLEAN
+    PUSH    RCX
+%endif
+    PUSH    RBX
+    PUSH    RSI
+    PUSH    RDI
+    PUSH    RBP                           ; Stack now ends with 8 (!CLEAN) or is 16 byte (CLEAN) aligned
+%endif
+%ifdef CLEAN
+    PUSH    RAX                           ; dummy push to make stack end with 8 before next push
+%endif
+    MOV     DL, 0x60
+%endif
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc\0\0\0\0" (stack alignment changes)
     PUSH    RSP
     POP     RCX                           ; RCX = &("calc")
-%ifndef FUNC
-    SUB     RSP, 0x28                     ; Stack is now 16 bit aligned again and there are 4 QWORDS on the stack.
-%elifndef CLEAN
-    SUB     RSP, RDX                      ; Stack was 16 bit aligned already and there are >4 QWORDS on the stack.
-%else
-    SUB     RSP, 0x28                     ; Stack is now 16 bit aligned again and there are 4 QWORDS on the stack.
-%endif
+    SUB     RSP, RDX                      ; Stack was 16 byte aligned already and there are >4 QWORDS on the stack.
     MOV     RSI, [GS:RDX]                 ; RSI = [TEB + 0x60] = &PEB
     MOV     RSI, [RSI + 0x18]             ; RSI = [PEB + 0x18] = PEB_LDR_DATA
     MOV     RSI, [RSI + 0x10]             ; RSI = [PEB_LDR_DATA + 0x10] = LDR_MODULE InLoadOrder[0] (process)
@@ -77,23 +93,43 @@ find_winexec_x64:
 ; Found WinExec (RDI)
     CDQ                                   ; RDX = 0 (assumping EAX < 0x80000000, which should always be true)
     CALL    RDI                           ; WinExec(&("calc"), 0);
-
-%ifndef PLATFORM_INDEPENDENT
 %ifdef FUNC
-%ifndef CLEAN
+%ifdef CLEAN
+%ifdef STACK_ALIGN
     ADD     RSP, 0x68                     ; reset stack to where it was after pushing registers
 %else
-    ADD     RSP, 0x30                     ; Reset stack to where it was after pushing registers
+    ADD     RSP, 0x70                     ; reset stack to where it was after pushing registers
+%endif
+%else
+    ADD     RSP, 0x68                     ; reset stack to where it was after pushing registers
+%endif
+%ifndef PLATFORM_INDEPENDENT
+%ifdef STACK_ALIGN
+    POP     RSP
+%endif
 %endif
     POP     RBP                           ; POP registers
     POP     RDI
     POP     RSI
     POP     RBX
+%ifndef PLATFORM_INDEPENDENT
 %ifdef CLEAN
     POP     RDX                           ; POP additional registers
     POP     RCX
     POP     RAX
 %endif
-    RET                                   ; Return (in real life, you may want to replace this with "RET 0x????")
+    RET                                   ; Return
+%else
+%ifdef CLEAN
+    POP     RCX                           ; POP additional registers
+%endif
+%ifdef STACK_ALIGN
+    POP     RSP
+%endif
+%ifdef CLEAN
+    POP     RDX
+    POP     RAX
+%endif
+    RET                                   ; Return
 %endif
 %endif

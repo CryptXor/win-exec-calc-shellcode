@@ -10,6 +10,16 @@ BITS 32
 global _shellcode                         ; _ is needed because LINKER will add it automatically in 32-bit mode.
 _shellcode:
 
+%undef USE_COMMON                         ; not allowed as user-supplied
+%ifdef CLEAN
+%define FUNC                              ; force define FUNC is CLEAN is used
+%endif
+%ifndef FUNC
+%ifndef STACK_ALIGN
+%define USE_COMMON
+%endif
+%endif
+%ifndef USE_COMMON
 %ifdef CLEAN
     PUSH    EAX
     PUSH    EDX
@@ -21,6 +31,7 @@ _shellcode:
 %endif
     AND     SP, 0xFFF0
     PUSH    EAX
+%endif
 %endif
     ; x86                                 ; x64
     XOR     EAX, EAX                      ; --->  XOR   EAX, EAX

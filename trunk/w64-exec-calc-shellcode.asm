@@ -31,7 +31,7 @@ shellcode:
     PUSH    RSP
     POP     RAX
 %endif
-    AND     SPL, 0xF0                     ; Align stack to 16 bytes
+    AND     SP, -16                       ; Align stack to 16 bytes
                                           ; (we can't force it to end with 8 without dummy push and then or)
     PUSH    RAX                           ; Force stack to end with 8 before next push, also saves RSP to restore stack
 %elifdef CLEAN
@@ -57,9 +57,11 @@ shellcode:
 %endif
     MOV     DL, 0x60
 %endif
+%ifndef USE_COMMON
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc\0\0\0\0" (stack alignment changes)
     PUSH    RSP
     POP     RCX                           ; RCX = &("calc")
+%endif
     SUB     RSP, RDX                      ; Stack was 16 byte aligned already and there are >4 QWORDS on the stack.
     MOV     RSI, [GS:RDX]                 ; RSI = [TEB + 0x60] = &PEB
     MOV     RSI, [RSI + 0x18]             ; RSI = [PEB + 0x18] = PEB_LDR_DATA
@@ -97,7 +99,11 @@ find_winexec_x64:
 %ifdef FUNC
 %ifdef CLEAN
 %ifdef STACK_ALIGN
+%ifndef PLATFORM_INDEPENDENT
     ADD     RSP, 0x68                     ; reset stack to where it was after pushing registers
+%else
+    ADD     RSP, 0x70                     ; reset stack to where it was after pushing registers
+%endif
 %else
     ADD     RSP, 0x70                     ; reset stack to where it was after pushing registers
 %endif

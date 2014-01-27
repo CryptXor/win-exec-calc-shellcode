@@ -22,7 +22,6 @@ _shellcode:
 %ifndef USE_COMMON
 %ifdef CLEAN
     PUSH    EAX
-    PUSH    EDX
 %endif
 %ifdef STACK_ALIGN
 %ifdef FUNC
@@ -42,20 +41,21 @@ _shellcode:
     PUSH    B2DW('c', 'a', 'l', 'c')      ; Stack = "calc", 0
     PUSH    ESP
     POP     ECX                           ; ECX = &("calc")
+    PUSH    EAX                           ; Stack = 0, "calc", 0
 %endif
-    DEC     EAX                           ; \,->  CQO
-    CDQ                                   ; /
+    INC     EAX                           ; \,->  XCHG RDX, RAX
+    XCHG    EDX, EAX                      ; /
     JE      w64_exec_calc_shellcode       ; --->  JE    w64_exec_calc_shellcode
 
 ; Because EDX is set to 0 in x64 mode, a size optimization is possible in the x64 shellcode.
 %define PLATFORM_INDEPENDENT  
 
-; Since EAX gets decremented on x86, the code did not branch but falls through
+; Since EAX gets incremented on x86, the code did not branch but falls through
 ; into the x86 shellcode.
 w32_exec_calc_shellcode:
 %include "w32-exec-calc-shellcode.asm"
 
-; Since EAX does NOT get decremented on x64, the code did branch to the x64
+; Since EAX does NOT get incremented on x64, the code did branch to the x64
 ; shellcode.
 w64_exec_calc_shellcode:
 %include "w64-exec-calc-shellcode.asm"
